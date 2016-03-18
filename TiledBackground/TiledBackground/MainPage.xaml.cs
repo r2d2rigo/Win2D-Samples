@@ -1,30 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
+﻿using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Brushes;
+using Microsoft.Graphics.Canvas.UI;
+using Microsoft.Graphics.Canvas.UI.Xaml;
+using System;
+using System.Threading.Tasks;
 using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
-using Microsoft.Graphics.Canvas.UI.Xaml;
-using Microsoft.Graphics.Canvas.UI;
-using Microsoft.Graphics.Canvas.Brushes;
-using System.Threading.Tasks;
-using Microsoft.Graphics.Canvas;
-
-// The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
 namespace TiledBackground
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class MainPage : Page
     {
         private CanvasBitmap backgroundImage;
@@ -40,8 +25,11 @@ namespace TiledBackground
         {
             args.TrackAsyncAction(Task.Run(async () =>
             {
+                // Load the background image and create an image brush from it
                 this.backgroundImage = await CanvasBitmap.LoadAsync(sender, new Uri("ms-appx:///Background.jpg"));
                 this.backgroundBrush = new CanvasImageBrush(sender, this.backgroundImage);
+
+                // Set the brush's edge behaviour to wrap, so the image repeats if the drawn region is too big
                 this.backgroundBrush.ExtendX = this.backgroundBrush.ExtendY = CanvasEdgeBehavior.Wrap;
 
                 this.resourcesLoaded = true;
@@ -51,28 +39,33 @@ namespace TiledBackground
 
         private void BackgroundCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args)
         {
+            // Just fill a rectangle with our tiling image brush, covering the entire bounds of the canvas control
             var session = args.DrawingSession;
             session.FillRectangle(new Rect(new Point(), sender.RenderSize), this.backgroundBrush);
         }
 
         private void ScaleSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
         {
+            // Don't modify the brush properties if it hasn't been initialized yet
             if (!this.resourcesLoaded)
             {
                 return;
             }
 
+            // Apply a scale matrix transform to the brush; this way we can control how big the image will be drawn
             this.backgroundBrush.Transform = System.Numerics.Matrix3x2.CreateScale((float)(e.NewValue / 100.0));
             this.BackgroundCanvas.Invalidate();
         }
 
         private void OpacitySlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
         {
+            // Don't modify the brush properties if it hasn't been initialized yet
             if (!this.resourcesLoaded)
             {
                 return;
             }
 
+            // Change the opacity of the brush
             this.backgroundBrush.Opacity = (float)(e.NewValue / 100.0);
             this.BackgroundCanvas.Invalidate();
         }
